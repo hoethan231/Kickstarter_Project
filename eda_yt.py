@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from pandas.plotting import scatter_matrix
 
 # Tools for preprocessing 
 from sklearn.preprocessing import StandardScaler, Normalizer, LabelEncoder
@@ -57,10 +58,11 @@ toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "slug", "creator", "loca
         "profile", "urls", "source_url", "friends", "is_starred", "is_backing", "permissions", 
         "name_len", "name_len_clean", "blurb_len", "blurb_len_clean", "deadline", 
         "state_changed_at", "created_at", "launched_at", "create_to_launch", "launch_to_deadline", 
-        "launch_to_state_change", ]
+        "launch_to_state_change", "currency_symbol", "deadline_weekday", "disable_communication", 
+        "static_usd_rate"]
 
-toEncode = ["state", "disable_communication", "country", "currency", "currency_symbol", 
-            "currency_trailing_code", "staff_pick", "category", "spotlight", "deadline_weekday", 
+toEncode = ["state", "country", "currency", 
+            "currency_trailing_code", "staff_pick", "category", "spotlight", 
             "state_changed_at_weekday", "created_at_weekday", "launched_at_weekday"]
 
 '''
@@ -73,6 +75,9 @@ toEncode = ["state", "disable_communication", "country", "currency", "currency_s
     Columns with dates and other useful information like `deadline`, `created_at`, `launched_at` could 
     be filtered into a new integer column for use. Thankfully the dataset provides these for example 
     splitting the string column `deadline` into an int `deadline_month`, `deadline_year`, and `deadline_day`.
+    
+    Other columns like `disable_communication` will be removed as well as they dont seem to hold much correlation
+    to other features and their a majority of its data is false and assuming the minority are outliers. 
 ''' 
 
 clean_kickstarter = kickstarter.drop(columns=toDrop, axis=1)
@@ -94,3 +99,48 @@ for col in toEncode:
     clean_kickstarter[col] = encoder.fit_transform(clean_kickstarter[col])
     
 clean_kickstarter.hist(figsize=(15, 20), layout=(11, 4))
+
+clean_kickstarter.corr()["SuccessfulBool"].sort_values()
+
+scatter_matrix(clean_kickstarter)
+plt.show()
+
+'''
+    Testing out some transforms
+'''
+
+x = clean_kickstarter.drop(["SuccessfulBool"], axis=1)
+y = pd.DataFrame(clean_kickstarter["SuccessfulBool"])
+
+standardizer = StandardScaler().fit(x)
+normalizer = Normalizer().fit(x)
+
+x_nrm = pd.DataFrame(normalizer.transform(x), columns=x.columns)
+df_nrm = pd.concat([x_nrm, y], axis=1)
+# df_nrm = df_nrm.dropna()
+
+x_std = pd.DataFrame(standardizer.transform(x), columns=x.columns)
+df_std = pd.concat([x_std, y], axis=1)
+# df_std = df_std.dropna()
+
+df_nrm.describe()
+
+# Columns to plot (exclude target variable)
+columns_to_plot = x.columns
+
+fig, axes = plt.subplots(11, 4, figsize=(20, 5 * 4))
+axes = axes.flatten() 
+for i, col in enumerate(columns_to_plot):
+    ax = axes[i]
+    ax.hist(clean_kickstarter[col], bins=30, alpha=0.4, label='Original')
+    ax.hist(df_std[col], bins=30, alpha=0.4, label='Standardized')
+    ax.hist(df_nrm[col], bins=30, alpha=0.4, label='Normalized')
+    ax.set_title(col)
+    ax.legend(fontsize='small')
+
+# Hide any unused subplots
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+plt.tight_layout()
+plt.show()
