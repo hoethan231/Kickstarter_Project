@@ -1,0 +1,102 @@
+'''
+ 0   goal                         20632 non-null  float64
+    
+        I am assuming that the goal currency is in their local currency, so we may have to convert them, we multiple each goal
+        with the static_usd_rate. Therefore, all our currency is in USD rather than in different types of currency.
+ 
+ 1   pledged                      20632 non-null  float64
+ 2   state                        20632 non-null  object 
+ 3   country                      20632 non-null  object 
+ 4   currency                     20632 non-null  object 
+ 5   currency_trailing_code       20632 non-null  bool      
+        
+        We can prob delete that, we have to look into what that means
+    
+ 6   staff_pick                   20632 non-null  bool   
+ 7   backers_count                20632 non-null  int64  
+ 8   static_usd_rate              20632 non-null  float64
+
+        We are definately dropping that because we have the year the kickstarter was created and the pledge amount in USD.
+        We will still use it but for like the models used later, we will ignore this model. 
+
+ 9   usd_pledged                  20632 non-null  float64
+ 10  category                     18743 non-null  object 
+ 
+        There is some NaN (10% of data is mislabeled), so I am thinking we should label those NaN to something.
+ 
+ 11  spotlight                    20632 non-null  bool   
+ 12  state_changed_at_weekday     20632 non-null  object 
+ 
+        This is prob useless, but I would want to see if there is any correlation with the "state" feature
+ 
+ 13  created_at_weekday           20632 non-null  object 
+ 
+        This goes the same for the weekday and I want to see if there is any relationship between the weekday or something
+        and the state of the kickstarter and perhaps if the kickstarter is successful or not. I really doubt there is any
+        relationship between them but whatever.
+    
+ 14  launched_at_weekday          20632 non-null  object 
+ 
+        Again, same goes here.
+ 
+ 15  deadline_month               20632 non-null  int64  
+ 
+        Maybe consider this and see its relationship of the state of the kickstarter?
+ 
+ 16  deadline_day                 20632 non-null  int64  
+ 
+        Maybe consider this and see its relationship of the state of the kickstarter?
+ 
+ 17  deadline_yr                  20632 non-null  int64  
+ 
+        Maybe consider this and see its relationship of the state of the kickstarter?
+ 
+ 18  deadline_hr                  20632 non-null  int64  
+ 
+        Maybe consider this and see its relationship of the state of the kickstarter? For all the deadlines, I am assuming 
+        there are unique deadlines specific for each country that could impact it. 
+ 
+ 19  state_changed_at_month       20632 non-null  int64  
+ 
+        Prob this because looking at the histogram, it is basically all even throughout, there is no noticeable pattern considering
+        the entire dataset. We could look at each country but I think that is irrelavent to know for our models.
+ 
+ 20  state_changed_at_day         20632 non-null  int64  
+    
+        Extra information. Can remove.
+ 
+ 21  state_changed_at_yr          20632 non-null  int64  
+ 
+        Comparing the histogram between this and the year created, they are like one-to-one. I am thinking to drop this because 
+        this is extra information we most likely do not need. 
+ 
+ 22  state_changed_at_hr          20632 non-null  int64  
+ 
+        Extra information. Can remove. 
+ 
+ 23  created_at_month             20632 non-null  int64  
+ 24  created_at_day               20632 non-null  int64  
+ 25  created_at_yr                20632 non-null  int64  
+ 26  created_at_hr                20632 non-null  int64  
+ 27  launched_at_month            20632 non-null  int64  
+ 28  launched_at_day              20632 non-null  int64  
+ 29  launched_at_yr               20632 non-null  int64  
+ 30  launched_at_hr               20632 non-null  int64  
+ 31  create_to_launch_days        20632 non-null  int64  
+ 32  launch_to_deadline_days      20632 non-null  int64  
+ 33  launch_to_state_change_days  20632 non-null  int64  
+ 34  SuccessfulBool               20632 non-null  int64  
+ 35  USorGB                       20632 non-null  int64  
+ 36  TOPCOUNTRY                   20632 non-null  int64  
+ 
+        I am not sure this means. 
+ 
+ 37  LaunchedTuesday              20632 non-null  int64  
+ 
+        I have no idea what the column means.
+ 
+ 38  DeadlineWeekend              20632 non-null  int64  
+ 
+        I have no idea what the column means.
+ 
+'''
