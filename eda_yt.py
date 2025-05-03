@@ -16,11 +16,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Tools for preprocessing 
-from sklearn.preprocessing import StandardScaler, Normalizer 
+from sklearn.preprocessing import StandardScaler, Normalizer, LabelEncoder
 from sklearn.decomposition import PCA 
 
 # Extracting the contain from the .csv file into a Pandas Dataframe
-filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
+filepath = "C:/Users/Admin/OneDrive/Desktop/Vs/Kickstarter_Project/dataset/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
 '''
@@ -48,8 +48,49 @@ kickstarter = pd.read_csv(filepath)
     
 '''
 
-# Viewing all the columns 
+# Still working in progress... roommate sleeping :( # haha no worries 
+print(kickstarter.head())
+print(kickstarter.shape)
 print(kickstarter.columns)
 
-# Still working in progress... roommate sleeping :(
-kickstarter = kickstarter.drop(['Unnamed: 0', 'photo', 'name', 'blurb', 'slug'], axis=1)
+toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "slug", "creator", "location", 
+        "profile", "urls", "source_url", "friends", "is_starred", "is_backing", "permissions", 
+        "name_len", "name_len_clean", "blurb_len", "blurb_len_clean", "deadline", 
+        "state_changed_at", "created_at", "launched_at", "create_to_launch", "launch_to_deadline", 
+        "launch_to_state_change", ]
+
+toEncode = ["state", "disable_communication", "country", "currency", "currency_symbol", 
+            "currency_trailing_code", "staff_pick", "category", "spotlight", "deadline_weekday", 
+            "state_changed_at_weekday", "created_at_weekday", "launched_at_weekday"]
+
+'''
+    Catergorical columns like `id`, `photo`, and `name` are dropped because they present unique stings 
+    that have no correlation with other other rows meaning that if we encoded them, we would get 20632 
+    unique ids. 
+    
+    There are also some that seem completly useless like `name_len`. 
+    
+    Columns with dates and other useful information like `deadline`, `created_at`, `launched_at` could 
+    be filtered into a new integer column for use. Thankfully the dataset provides these for example 
+    splitting the string column `deadline` into an int `deadline_month`, `deadline_year`, and `deadline_day`.
+''' 
+
+clean_kickstarter = kickstarter.drop(columns=toDrop, axis=1)
+clean_kickstarter.info()
+clean_kickstarter.isnull().sum()
+
+'''
+    We can see that some coloumns like `catergory` have empty values, we shoudl remove that before any transformations
+'''
+
+clean_kickstarter = clean_kickstarter.dropna()
+
+'''
+    After dealing with NaN values, we can begin transforming data.
+'''
+
+encoder = LabelEncoder()
+for col in toEncode:
+    clean_kickstarter[col] = encoder.fit_transform(clean_kickstarter[col])
+    
+clean_kickstarter.hist(figsize=(15, 20), layout=(11, 4))
