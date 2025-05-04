@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 
 # Tools for preprocessing 
-from sklearn.preprocessing import StandardScaler, Normalizer, LabelEncoder
+from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, LabelEncoder
 from sklearn.decomposition import PCA 
 
 # Extracting the contain from the .csv file into a Pandas Dataframe
@@ -113,21 +113,22 @@ x = clean_kickstarter.drop(["SuccessfulBool"], axis=1)
 y = pd.DataFrame(clean_kickstarter["SuccessfulBool"])
 
 standardizer = StandardScaler().fit(x)
-normalizer = Normalizer().fit(x)
+normalizer = MinMaxScaler().fit(x) 
+# used minmax cause normalizer wasnt showing on graphs and log would turn some values to 0, but represent it as NaN
 
 x_nrm = pd.DataFrame(normalizer.transform(x), columns=x.columns)
-df_nrm = pd.concat([x_nrm, y], axis=1)
+df_nrm = pd.concat([x_nrm*3, y], axis=1) # I scaled this so I could see it better on the graphs
 # df_nrm = df_nrm.dropna()
 
 x_std = pd.DataFrame(standardizer.transform(x), columns=x.columns)
 df_std = pd.concat([x_std, y], axis=1)
 # df_std = df_std.dropna()
 
-df_nrm.describe()
+df_nrm.info()
 
-# Columns to plot (exclude target variable)
 columns_to_plot = x.columns
 
+# Plot original df, standardized, and normalized data on histograms
 fig, axes = plt.subplots(11, 4, figsize=(20, 5 * 4))
 axes = axes.flatten() 
 for i, col in enumerate(columns_to_plot):
@@ -144,3 +145,13 @@ for j in range(i + 1, len(axes)):
 
 plt.tight_layout()
 plt.show()
+
+# Plot log and sqrt df
+df_srqt_log = clean_kickstarter
+for col in clean_kickstarter.columns:
+    df_srqt_log[col] = np.log2(np.sqrt(df_srqt_log[col]))
+df_srqt_log.replace(-np.inf, 0, inplace=True)
+df_srqt_log.hist()
+
+# I like the distribution for df_srqt_log so I will be going with this for now and can invesitgate more translations later
+df = df_srqt_log
