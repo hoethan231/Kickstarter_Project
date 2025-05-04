@@ -21,7 +21,7 @@ from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, Labe
 from sklearn.decomposition import PCA 
 
 # Extracting the contain from the .csv file into a Pandas Dataframe
-filepath = "C:/Users/Admin/OneDrive/Desktop/Vs/Kickstarter_Project/dataset/kickstarter_data_full.csv"
+filepath = "E:/vs/Kickstarter_Project/dataset/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
 '''
@@ -49,7 +49,6 @@ kickstarter = pd.read_csv(filepath)
     
 '''
 
-# Still working in progress... roommate sleeping :( # haha no worries 
 print(kickstarter.head())
 print(kickstarter.shape)
 print(kickstarter.columns)
@@ -148,10 +147,13 @@ plt.show()
 
 # Plot log and sqrt df
 df_srqt_log = clean_kickstarter
-for col in clean_kickstarter.columns:
+for col in columns_to_plot:
     df_srqt_log[col] = np.log2(np.sqrt(df_srqt_log[col]))
 df_srqt_log.replace(-np.inf, 0, inplace=True)
 df_srqt_log.hist()
 
 # I like the distribution for df_srqt_log so I will be going with this for now and can invesitgate more translations later
+# We will also export these variables to use in our training and testing
 df = df_srqt_log
+X = df.drop(["SuccessfulBool"], axis=1)
+Y = pd.DataFrame(df["SuccessfulBool"])
