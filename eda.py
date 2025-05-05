@@ -1,14 +1,3 @@
-''' 
-This file will contain conclusions made from my own EDA and work from other individuals compiled here.
-
-The dataset contains attributes that relate to whether a kickstarter failed or succeeded. I will be looking 
-into the kickstarter_data_full and analyze the entire data provided by the dataset. I think the features 
-.csv file extracts only all the related features for the data set. Nonetheless, I want to look into all the
-attributes from the dataset and make my own conclusions. 
-
-
-'''
-
 import math
 import pandas as pd
 import numpy as np
@@ -16,43 +5,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 
-# Tools for preprocessing 
-from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, LabelEncoder
-from sklearn.decomposition import PCA 
-
-# Extracting the contain from the .csv file into a Pandas Dataframe
+from sklearn.preprocessing import StandardScaler, Normalizer, LabelEncoder, MinMaxScaler
+from sklearn.decomposition import PCA
 filepath = "E:/vs/Kickstarter_Project/dataset/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
-
-'''
-    I am going to clear out some of the following columns seen below.
-    I will remove ID later, I will check if there are duplicate IDs
-    that we should remove. 
-    
-    Context: 'Blurb' is a short description of the kickstarter; basically tells 
-    what the kickerstart is about.
-    
-    We will need to enumerate the 'state' of the kickerstarter:
-        successful
-        failed
-        cancelled
-        live
-        suspended
-        
-    Since the state 'live' is inbetween the failed and successful portions, we can consider kickerstarters in
-    'live' state to be failed. So if we create a binary classifier, then we will consider the state 'successful' versus
-    all the rest of the states. To simplify our classifier for the project requirements and ourselves, we will do only 
-    this one versus all binary classifier. 
-    
-    The 'slug' state I am pretty sure it is just the event name where the kickerstarter started or something along the 
-    lines like that. We can remove that, since they are all unique to themselves. 
-    
-'''
-
-print(kickstarter.head())
-print(kickstarter.shape)
-print(kickstarter.columns)
-
+kickstarter.head()
+kickstarter.shape
+kickstarter.columns
 toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "slug", "creator", "location", 
         "profile", "urls", "source_url", "friends", "is_starred", "is_backing", "permissions", 
         "name_len", "name_len_clean", "blurb_len", "blurb_len_clean", "deadline", 
@@ -81,6 +40,7 @@ toEncode = ["state", "country", "currency",
 
 clean_kickstarter = kickstarter.drop(columns=toDrop, axis=1)
 clean_kickstarter.info()
+
 clean_kickstarter.isnull().sum()
 
 '''
@@ -96,8 +56,15 @@ clean_kickstarter = clean_kickstarter.dropna()
 encoder = LabelEncoder()
 for col in toEncode:
     clean_kickstarter[col] = encoder.fit_transform(clean_kickstarter[col])
-    
+
 clean_kickstarter.hist(figsize=(15, 20), layout=(11, 4))
+plt.figure()
+heapmap = clean_kickstarter.corr(method='pearson')
+sns.heatmap(heapmap.round(2), square=True, annot=True)
+plt.yticks(rotation=0)
+plt.xticks(rotation=90)
+plt.rcParams['figure.figsize'] = [25, 30]
+plt.show()
 
 clean_kickstarter.corr()["SuccessfulBool"].sort_values()
 
@@ -117,11 +84,9 @@ normalizer = MinMaxScaler().fit(x)
 
 x_nrm = pd.DataFrame(normalizer.transform(x), columns=x.columns)
 df_nrm = pd.concat([x_nrm*3, y], axis=1) # I scaled this so I could see it better on the graphs
-# df_nrm = df_nrm.dropna()
 
 x_std = pd.DataFrame(standardizer.transform(x), columns=x.columns)
 df_std = pd.concat([x_std, y], axis=1)
-# df_std = df_std.dropna()
 
 df_nrm.info()
 
@@ -147,7 +112,7 @@ plt.show()
 
 # Plot log and sqrt df
 df_srqt_log = clean_kickstarter
-for col in columns_to_plot:
+for col in x.columns:
     df_srqt_log[col] = np.log2(np.sqrt(df_srqt_log[col]))
 df_srqt_log.replace(-np.inf, 0, inplace=True)
 df_srqt_log.hist()
