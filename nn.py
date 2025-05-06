@@ -1,44 +1,68 @@
 import pandas as pd
-import matplotlib as plt
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.optimizers import Adam, SGD, RMSprop
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Flatten, Dense
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
 
 from df import X, Y
-x_train, x_test, y_train, y_test = train_test_split(X, Y, random_state=42, test_size=0.3, stratify=Y)
 
-model = Sequential()
-model.add(Flatten(input_shape=(37,)))
-model.add(Dense(50, activation='sigmoid'))
-model.add(Dense(25, activation='sigmoid'))
-model.add(Dense(1, activation='relu'))
-model.summary()
+X = X.drop('spotlight', axis=1)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, train_size=0.7, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-model.compile(optimizer=SGD(),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+nn_model = Sequential([
+    Input(shape=(X_train_scaled.shape[1],)),
+    Dense(64, activation='relu'),
+    Dropout(0.5),
+    Dense(32, activation='relu'),
+    Dropout(0.3),
+    Dense(1, activation='sigmoid')
+])
 
-history1 = model.fit(x_train, y_train, epochs=15, batch_size=128, validation_split=0.2)
-#Doing one layer with 100 inputs, I have a horrible accuracy with 0.27, so instead try two layers with 50 and 25 nodes. At first I got 0.98 accuracy but after rerunning im getting .70 and im not sure why. I do notice that adding too many epoch brings the accuracy down so much at the end.
+nn_model.compile(
+    optimizer=Adam(),
+    loss='binary_crossentropy',
+    metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
+)
 
-model = Sequential()
-model.add(Flatten(input_shape=(37,)))
-# model.add(Dense(100, activation='relu'))
-model.add(Dense(50, activation='relu'))
-model.add(Dense(50, activation='relu'))
-model.add(Dense(25, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
-model.summary()
+history = nn_model.fit(
+    X_train_scaled, y_train,
+    validation_split=0.2,
+    batch_size=64,
+    epochs=50,
+    callbacks=[EarlyStopping(patience=5, restore_best_weights=True)],
+    verbose=1
+)
 
-model.compile(optimizer=SGD(),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+nn_preds_proba = nn_model.predict(X_test_scaled).flatten()
+nn_preds = (nn_preds_proba > 0.5).astype(int)
 
-history2 = model.fit(x_train, y_train, epochs=15, batch_size=128, validation_split=0.2)
-#Instead I tried sigmoid at the output and the results became so much better. I will save it jsut in case rerunning it makes it go away:
+acc = accuracy_score(y_test, nn_preds)
+auc = roc_auc_score(y_test, nn_preds_proba)
 
-pd.DataFrame(history2.history).plot(figsize=(8, 5))
-model.evaluate(x_test, y_test)
-#It seems like even with three layers we were not overfitted and was able to perform well on both a training and testing set
+print(f"Neural Network Accuracy: {acc:.4f}")
+print(f"Neural Network AUC: {auc:.4f}")
+
+print(" Classification Report:")
+print(classification_report(y_test, nn_preds))
+
+fpr, tpr, _ = roc_curve(y_test, nn_preds_proba)
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label=f"NN Model (AUC = {auc:.4f})")
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve - Neural Network")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
