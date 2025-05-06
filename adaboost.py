@@ -98,8 +98,19 @@ while estimators < 600:
 
 # Now I want to plot the confusion matrix and other stuff to visualize the performance
 
+y_pred_prob = best_ada.predict_proba(x_test)[:, 1]
 y_pred = best_ada.predict(x_test)
 
+acc = accuracy_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred_prob)
+precision, recall, _ = precision_recall_curve(y_test, y_pred_prob)
+pr_auc = auc(recall, precision)
+
+print(f"Accuracy: {acc:.4f}")
+print(f"ROC AUC: {roc_auc:.4f}")
+print(f"Precision-Recall AUC: {pr_auc:.4f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
 
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Fail', 'Success'])
