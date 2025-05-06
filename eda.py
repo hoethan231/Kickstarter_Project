@@ -4,9 +4,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
-
 from sklearn.preprocessing import StandardScaler, Normalizer, LabelEncoder, MinMaxScaler
 from sklearn.decomposition import PCA
+
 filepath = "E:/vs/Kickstarter_Project/dataset/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 kickstarter.head()
