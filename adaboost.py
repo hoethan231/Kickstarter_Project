@@ -192,4 +192,21 @@ plt.show()
         Learning Rate = 0.3
         # of Estimators = 550
         Max Depth = 2
+        
+    The best performance considering computation and parameter tuning based on our EDA of the dataset is:
+        Accuracy: 0.7954
+        ROC AUC: 0.8548
+        Precision-Recall AUC: 0.6909
+    
+    Classification Report:
+                    precision    recall  f1-score   support
+
+                0       0.83      0.90      0.86      1297
+                1       0.69      0.53      0.60       531
+
+            accuracy                        0.80      1828
+           macro avg    0.76      0.72      0.73      1828
+        weighted avg    0.79      0.80      0.79      1828
+        
+    This is for the # of Estimators with 550.
 '''
