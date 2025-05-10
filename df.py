@@ -28,6 +28,12 @@ encoder = LabelEncoder()
 for col in to_encode:
     kickstarter[col] = encoder.fit_transform(kickstarter[col])
 
+# One group mentioned that live state is inbetween failed and successful states. Since we cannot differentiate 
+# between either live state is in failed or successful, we will remove all rows that contain live state. 
+
+
+# One group mentioned that some of these columns are sorted, so we should randomize the dataframe
+
 X = kickstarter.drop(['SuccessfulBool'], axis=1)
 Y = kickstarter['SuccessfulBool']
 
