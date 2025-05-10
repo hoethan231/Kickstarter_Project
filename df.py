@@ -10,7 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 filepath = "/Users/prathamsaxena/Downloads/SJSU/CMPE 188/ML Code/ML Data/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
-selected_columns = ['goal', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
+selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'SuccessfulBool']
 
 kickstarter = kickstarter[selected_columns]
@@ -30,9 +30,11 @@ for col in to_encode:
 
 # One group mentioned that live state is inbetween failed and successful states. Since we cannot differentiate 
 # between either live state is in failed or successful, we will remove all rows that contain live state. 
-
+kickstarter = kickstarter[kickstarter['state'] != 'live']
+kickstarter = kickstarter.drop('state', axis=1)
 
 # One group mentioned that some of these columns are sorted, so we should randomize the dataframe
+kickstarter = kickstarter.sample(frac=1).reset_index(drop=True)
 
 X = kickstarter.drop(['SuccessfulBool'], axis=1)
 Y = kickstarter['SuccessfulBool']
