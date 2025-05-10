@@ -7,11 +7,13 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
-filepath = "/Users/prathamsaxena/Downloads/SJSU/CMPE 188/ML Code/ML Data/kickstarter_data_full.csv"
+filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
+# selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
+#                     'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'name_len_clean' 'SuccessfulBool']
 selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
-                   'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'SuccessfulBool']
+                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'SuccessfulBool']
 
 kickstarter = kickstarter[selected_columns]
 

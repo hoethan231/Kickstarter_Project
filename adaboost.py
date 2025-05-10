@@ -115,24 +115,24 @@ while estimators < 600:
     
     
 # Applying Cross Validation to each model
-results_accuracy = []
-names_accuracy = []
-scoring = 'accuracy'
+# results_accuracy = []
+# names_accuracy = []
+# scoring = 'accuracy'
 
-for name, model in models:
-    kfold = KFold(n_splits=5)
-    cv_results = cross_val_score(model, x_train, y_train, cv=kfold, scoring=scoring)
-    results_accuracy.append(cv_results)
-    names_accuracy.append(name)
+# for name, model in models:
+#     kfold = KFold(n_splits=5)
+#     cv_results = cross_val_score(model, x_train, y_train, cv=kfold, scoring=scoring)
+#     results_accuracy.append(cv_results)
+#     names_accuracy.append(name)
     
-# Box Plot Comparison of K-Fold Cross Validation Results from Accuracy Score
-fig = plt.figure()
-fig.suptitle("Cross Validation Comparison Comparison")
-ax = fig.add_subplot(111)
-plt.boxplot(results_accuracy)
-ax.set_xticklabels(names_accuracy)
-plt.figure(figsize=(25, 6))
-plt.show()
+# # Box Plot Comparison of K-Fold Cross Validation Results from Accuracy Score
+# fig = plt.figure()
+# fig.suptitle("Cross Validation Comparison Comparison")
+# ax = fig.add_subplot(111)
+# plt.boxplot(results_accuracy)
+# ax.set_xticklabels(names_accuracy)
+# plt.figure(figsize=(25, 6))
+# plt.show()
     
 # From all these iterations, we have selected the model we though is the best considering performance and computation
 
