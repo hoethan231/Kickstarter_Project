@@ -12,10 +12,6 @@ from sklearn.preprocessing import LabelEncoder
 filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
-# selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
-#                     'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'name_len_clean', 
-#                     'blurb_len_clean', 'deadline_weekday', 'created_at_weekday', 'launched_at_weekday', 'USorGB', 
-#                     'TOPCOUNTRY', 'LaunchedTuesday', 'DeadlineWeekend', 'SuccessfulBool']
 selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'category', 'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'blurb_len_clean', 'SuccessfulBool']
 
 kickstarter = kickstarter[selected_columns]
@@ -23,13 +19,10 @@ kickstarter = kickstarter[selected_columns]
 kickstarter = kickstarter.dropna()
 
 kickstarter['goal'] = kickstarter['goal'] * kickstarter['static_usd_rate']
-
 # We don't need that column, just to convert the goals data
 kickstarter = kickstarter.drop('static_usd_rate', axis=1)
 
-# Encoding category and country
 to_encode = ['category', 'country']
-# to_encode = ['category', 'country', 'deadline_weekday', 'created_at_weekday', 'launched_at_weekday']
 encoder = LabelEncoder()
 for col in to_encode:
     kickstarter[col] = encoder.fit_transform(kickstarter[col])
@@ -41,21 +34,6 @@ kickstarter = kickstarter.drop('state', axis=1)
 
 # One group mentioned that some of these columns are sorted, so we should randomize the dataframe
 kickstarter = kickstarter.sample(frac=1, random_state=42).reset_index(drop=True)
-# rows = []
-# fail_count = 0
-# target = 5220
-
-# for _, row in kickstarter.iterrows():
-#     if row['SuccessfulBool'] == 1:
-#         rows.append(row)
-#     elif(fail_count <= target):
-#         rows.append(row)
-#         fail_count += 1
-        
-# kickstarter = pd.DataFrame(rows, columns=kickstarter.columns).reset_index(drop=True)
-
-# # Shuffle one more time
-# kickstarter = kickstarter.sample(frac=1, random_state=42).reset_index(drop=True)s
 
 X = kickstarter.drop(['SuccessfulBool'], axis=1)
 Y = kickstarter['SuccessfulBool']
@@ -65,15 +43,15 @@ Y = kickstarter['SuccessfulBool']
 
 rawData = pd.read_csv(filepath)
 
-toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "slug", "creator", "location", 
-        "profile", "urls", "source_url", "friends", "is_starred", "is_backing", "permissions", 
-        "name_len", "name_len_clean", "blurb_len", "blurb_len_clean", "deadline", 
-        "state_changed_at", "created_at", "launched_at", "create_to_launch", "launch_to_deadline", 
-        "launch_to_state_change", "state", "spotlight"]
 
-toEncode = ["disable_communication", "country", "currency", "currency_symbol", 
-            "currency_trailing_code", "staff_pick", "category", "deadline_weekday", 
-            "state_changed_at_weekday", "created_at_weekday", "launched_at_weekday"]
+toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "pledged", "state", "slug", "disable_communication", 
+          "currency_symbol", "currency_trailing_code", "deadline", "state_changed_at", "created_at", "launched_at", 
+          "staff_pick", "backers_count", "usd_pledged", "creator", "location", "profile", "spotlight", "urls", 
+          "source_url", "friends", "is_starred", "is_backing", "permissions", "create_to_launch", "launch_to_dealine", 
+          "launch_to_state_change"]
+
+toEncode = ["country", "currency", "category", "deadline_weekday", "state_chnaged_at_weekday", "created_at_weekday",
+            "launched_at_weekday"]
 
 rawDF = rawData.drop(columns=toDrop, axis=1)
 rawDF = rawDF.dropna()
