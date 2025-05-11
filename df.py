@@ -14,8 +14,7 @@ kickstarter = pd.read_csv(filepath)
 #                     'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'name_len_clean', 
 #                     'blurb_len_clean', 'deadline_weekday', 'created_at_weekday', 'launched_at_weekday', 'USorGB', 
 #                     'TOPCOUNTRY', 'LaunchedTuesday', 'DeadlineWeekend', 'SuccessfulBool']
-selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
-                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'blurb_len_clean', 'SuccessfulBool']
+selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'category', 'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'blurb_len_clean', 'SuccessfulBool']
 
 kickstarter = kickstarter[selected_columns]
 
