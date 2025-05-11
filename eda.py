@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
 import math
 import pandas as pd
 import numpy as np
@@ -9,6 +15,10 @@ from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.preprocessing import LabelEncoder
 # from sklearn.decomposition import PCA 
 
+
+# In[ ]:
+
+
 # Extracting the contain from the .csv file into a Pandas Dataframe
 
 ''' https://www.kaggle.com/datasets/sripaadsrinivasan/kickstarter-campaigns-dataset '''
@@ -16,8 +26,16 @@ from sklearn.preprocessing import LabelEncoder
 filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
+
+# In[ ]:
+
+
 # Viewing all the columns 
 kickstarter.columns
+
+
+# In[ ]:
+
 
 """
     I am going to clear out some of the following columns seen below.
@@ -53,6 +71,10 @@ something or just to note the demographic of our dataset. So we can understand i
 one state or what. Maybe not use it as a feature for our clasification model but can consider. There is a feature 
 called "SuccessfulBool", so we can use that as our OUTPUT in our binary classifier.
 """
+
+
+# In[ ]:
+
 
 '''
  0   goal                         20632 non-null  float64
@@ -163,6 +185,10 @@ called "SuccessfulBool", so we can use that as our OUTPUT in our binary classifi
        not INT64. Since we included the other features that already include this like deadline_day. I think we should just ignore these. 
 '''
 
+
+# In[ ]:
+
+
 features_list = ['goal', 'pledged', 'state', 'country', 'currency', 'currency_trailing_code',
                  'staff_pick', 'backers_count', 'static_usd_rate', 'usd_pledged', 'category',
                  'spotlight', 'state_changed_at_weekday', 'created_at_weekday', 'launched_at_weekday',
@@ -170,7 +196,7 @@ features_list = ['goal', 'pledged', 'state', 'country', 'currency', 'currency_tr
                  'state_changed_at_day', 'state_changed_at_yr', 'state_changed_at_hr', 'created_at_month', 
                  'created_at_day', 'created_at_yr', 'created_at_hr', 'launched_at_month', 
                  'launched_at_day', 'launched_at_yr', 'launched_at_hr', 'create_to_launch_days',
-                 'launch_to_deadline_days', 'launch_to_state_change_days', 'SuccessfulBool', 'name_len_clean']
+                 'launch_to_deadline_days', 'launch_to_state_change_days', 'SuccessfulBool', 'name_len_clean', 'TOPCOUNTRY', 'LaunchedTuesday', 'DeadlineWeekend', 'blurb_len_clean']
 
 '''
 After hearing from other groups, we want to add some other features to consider and investigate. Another 
@@ -183,13 +209,25 @@ additional_features = ['name_len_clean']
 # Selecting features that we think are important
 kickstarter = kickstarter[features_list]
 
+
+# In[ ]:
+
+
 kickstarter = kickstarter.dropna()
 
 # Again, this realy sucks cause we are removing a lot about like 10% of data 
 # (dropped ~2000 kickerstarters) which is valuable to us
 
+
+# In[ ]:
+
+
 # Displaying the object type of each feature
 kickstarter.dtypes
+
+
+# In[ ]:
+
 
 # Observing the demographic of our data
 plt.figure(figsize=(10, 6))
@@ -205,6 +243,10 @@ As a result, whatever conclusions from our analysis may be a good assumption for
 from other countries.
 '''
 
+
+# In[ ]:
+
+
 # Seeing all of the count for each kickstarter state
 plt.figure(figsize=(10, 6))
 kickstarter['state'].value_counts().plot(kind='bar')
@@ -217,6 +259,10 @@ plt.show()
 # We can make a cleaner by removing the 'live' state from our dataset, since SuccessfulBool will categorize that as failed.
 # Since canceled and suspended states I think can also be considered failed, we will leave those as is. If we are still going by
 # with our binary classification. 
+
+
+# In[ ]:
+
 
 # Seeing which Kickerstarter was classified at sucessful or not based
 plt.figure(figsize=(10, 6))
@@ -232,6 +278,10 @@ For the actual understanding of the dataset, we will use the state of the kicker
 we will use the SuccessfulBool as our output for our classifier models. 
 '''
 
+
+# In[ ]:
+
+
 # We want to prove if state and SuccessfulBool are the same (outputs) by counting the number of successful states and 
 # number of 1's in SuccessfulBool
 
@@ -242,6 +292,10 @@ print(f"State: {count_state}")
 print(f"SuccessfulBool: {count_success_bool}")
 
 # They are exactly the same so we MUST eliminate state as a input for our models
+
+
+# In[ ]:
+
 
 # We also want to see the time created versus the success of a kickstarter; again, 
 # this could be due to a number of factors such the category the kickstarter falls under
@@ -273,6 +327,10 @@ plt.show()
     states other than successful as failed. 
 '''
 
+
+# In[ ]:
+
+
 # Let's see the relationship of each countries kickerstarted and the state of them
 counts = kickstarter.groupby(['country','state']).size().unstack(fill_value=0)
 for country in counts.index:
@@ -291,6 +349,10 @@ Majority of the kickstarters sampled from each country shows sampling more faile
 As a result, for each country, we can get a better understanding why these kickstarters failed compared to why they succeeded or fall in other states.
 '''
 
+
+# In[ ]:
+
+
 # I want to see each countries demographic of kickestarters and the number of successful kickstarters for each country
 plt.figure(figsize=(10, 6))
 kickstarter['category'].value_counts().plot(kind='bar')
@@ -307,6 +369,10 @@ There were some unlabeled categories that was unfortunately dropped. That result
 based on information provided by the sample. For an easier time understanding the data, we can look what is already categorized. 
 ''' 
 
+
+# In[ ]:
+
+
 # Knowing the majority of categories and the range of years that the samples primarily came from and majority of 
 # the kickstarters are tech related (I will include hardware, software, and web together since that comprised like
 # half of our data; gadgets could be a number of things) I will look at the success ratio of those. I will then look
@@ -320,6 +386,10 @@ other_categories = ['Gadgets', 'Plays', 'Wearables', 'Musical', 'Sound',
 
 tech_df = kickstarter[kickstarter['category'].isin(tech_categories)]
 other_df = kickstarter[kickstarter['category'].isin(other_categories)]
+
+
+# In[ ]:
+
 
 # Shows the group of tech categories and see the success rate for each year that is was created
 counts = tech_df.groupby(['created_at_yr', 'state']).size().unstack(fill_value=0)
@@ -344,6 +414,10 @@ ax.legend(title='Category')
 plt.tight_layout()
 plt.show()
 
+
+# In[ ]:
+
+
 # Shows the group of other categories and see the success rate for each year that is was created
 counts = other_df.groupby(['created_at_yr', 'state']).size().unstack(fill_value=0)
 
@@ -366,6 +440,10 @@ ax.legend(title='Category')
 plt.tight_layout()
 plt.show()
 
+
+# In[ ]:
+
+
 '''
 Again, these two bar plots that is split between what we classified as tech startups and the test indicates that 
 there is a good difference between groups to help classify if a startup will fail or not. We can see that from the 
@@ -383,6 +461,10 @@ So in our classification models applied later on my guess is that since our data
 from 2014 to 2016 and tech-related ones, we can accurate predict the outcome of startups that fall within those ranges. 
 Outside of that, we have little data to ensure accuracy.
 '''
+
+
+# In[ ]:
+
 
 # A scatterplot displaying the relationship between the number of backers that supported kickstarters
 # and how much they raised. A color coordination indicates the kickstarter's state 
@@ -420,12 +502,20 @@ plt.show()
     state is a cheatcode, which we cannot use. 
 '''
 
+
+# In[ ]:
+
+
 # I am assuming that the amount in the goals column is in their local currency, so I will convert them to USD based on 
 # static_usd_rate. That was used to convert pledge to usd_pledge. We should drop pledge since the currecny is all over
 # place and have a singular type of currency throughout our analysis. 
 
 kickstarter['goal'] = kickstarter['goal'] * kickstarter['static_usd_rate']
 kickstarter['goal'].head
+
+
+# In[ ]:
+
 
 # We want to see the relationship with a kickestarter's initial goal amount versus the amount they did raise. We will
 # make a plot for each state. 
@@ -440,6 +530,10 @@ for state in kickstarter['state'].unique():
     ax.set_xlabel('Kickstarter USD Goal Amount')
     ax.set_ylabel('USD Pledge')
 plt.show()
+
+
+# In[ ]:
+
 
 # We want to see the relationship with a kickestarter's initial goal amount versus the amount they did raise. We will
 # make a plot for each state. 
@@ -495,6 +589,10 @@ plt.show()
     The line seen on the graph indicates that if a kickstarter falls on the line, they raised their goal amount almost exactly.
 '''
 
+
+# In[ ]:
+
+
 # Now I want to observe anything between the number of days when a kickstarter was created to when it 
 # was launched and the state of the kickstarter.
 
@@ -522,6 +620,10 @@ for state in kickstarter['state'].unique():
     I zoomed up to 75 days because that is where majority of the kickstarters concentrated. 
 '''
 
+
+# In[ ]:
+
+
 for state in kickstarter['state'].unique():
     subset = kickstarter[kickstarter['state'] == state]
     
@@ -547,6 +649,10 @@ for state in kickstarter['state'].unique():
     dataset, since for each state, they basically all have 30 days from launch to deadline. 
 '''
 
+
+# In[ ]:
+
+
 # A histogram the displays the entire dataset of the input days from launch_to_deadline_days 
 plt.figure(figsize=(10, 6))
 kickstarter['launch_to_deadline_days'].value_counts().plot(kind='bar')
@@ -560,6 +666,10 @@ plt.show()
     From this, we can see that majority of the kickstarters will have a launch to deadline day of 
     30 days. This feature may play very little in our model.
 '''
+
+
+# In[ ]:
+
 
 for state in kickstarter['state'].unique():
     subset = kickstarter[kickstarter['state'] == state]
@@ -588,6 +698,10 @@ for state in kickstarter['state'].unique():
     those kickstarters failed. 
 '''
 
+
+# In[ ]:
+
+
 counts = kickstarter.groupby(['state','staff_pick']).size().unstack(fill_value=0)
 for country in counts.index:
     freqs = counts.loc[country]
@@ -604,6 +718,10 @@ for country in counts.index:
     This may play a little in classifying which kickstarter is successful or not since still majority of the kickstarteres
     in each state were not staff picks
 '''
+
+
+# In[ ]:
+
 
 counts = kickstarter.groupby(['state','spotlight']).size().unstack(fill_value=0)
 for country in counts.index:
@@ -623,6 +741,10 @@ for country in counts.index:
     
     This is a really strong feature to use. 
 '''
+
+
+# In[ ]:
+
 
 # I am curious about the length of a kickstarter's name and they're successful
 
@@ -648,6 +770,115 @@ for state in kickstarter['state'].unique():
     Regardless, I think this column will play a little impact on the successful rate of a kickstarter.
 '''
 
+
+# In[ ]:
+
+
+# I am curious about the length of a kickstarter's blurb and they're successful
+
+for state in kickstarter['state'].unique():
+    subset = kickstarter[kickstarter['state'] == state]
+    
+    counts = subset['blurb_len_clean'].value_counts().sort_index()
+
+    fig, ax = plt.subplots(figsize=(8,4))
+    ax.bar(counts.index, counts.values, width=1.0, edgecolor='black')
+    
+    ax.set_title(f'Length of Kickstarter Name: {state}')
+    ax.set_xlabel('Length of Name')
+    
+    ax.set_xlim(0, 15)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+# In[ ]:
+
+
+counts = kickstarter.groupby(['country', 'TOPCOUNTRY']).size().unstack(fill_value=0)
+
+country_sorted = counts.index.tolist()
+states = counts.columns.tolist()
+x = np.arange(len(country_sorted))
+width = 0.8 / len(states)
+
+# Plot grouped bar chart
+fig, ax = plt.subplots(figsize=(12, 6))
+for i, cat in enumerate(states):
+    ax.bar(x + i*width, counts[cat], width=width, label=cat)
+
+ax.set_xlabel('Country')
+ax.set_ylabel('Number of Projects')
+ax.set_title('Kickstarter Projects by Country and TOPCOUNTRY')
+ax.set_xticks(x + width*(len(states)-1)/2)
+ax.set_xticklabels(years_sorted, rotation=45)
+ax.legend(title='Category')
+plt.tight_layout()
+plt.show()
+
+# So TOPCOUNTRY includes United States, Great Britain, Mexico, Hong Kong, New Zealand
+
+
+# In[ ]:
+
+
+counts = kickstarter.groupby(['state','TOPCOUNTRY']).size().unstack(fill_value=0)
+for binary in counts.index:
+    freqs = counts.loc[binary]
+    plt.figure()
+    plt.bar(freqs.index, freqs.values)
+    plt.title(f'Kickstarter State Counts in {binary}')
+    plt.xlabel('TOPCOUNTRY')
+    plt.ylabel('Count')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+    
+# There is no noticeable difference between each state, other than the fact that in the successful state, there is a smaller ratio between
+# if the top country is yes or no. Since we have the country, this feature is redundant. BUT, since there is significantly less kickstarters that 
+# are not a top country and succeeded, can help improve our bias model. This dataset is very biased. 
+
+
+# In[ ]:
+
+
+counts = kickstarter.groupby(['state','LaunchedTuesday']).size().unstack(fill_value=0)
+for binary in counts.index:
+    freqs = counts.loc[binary]
+    plt.figure()
+    plt.bar(freqs.index, freqs.values)
+    plt.title(f'Kickstarter State Counts in {binary}')
+    plt.xlabel('LaunchedTuesday')
+    plt.ylabel('Count')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+# Again, no pattern, useless feature to drop.
+
+
+# In[ ]:
+
+
+counts = kickstarter.groupby(['state','DeadlineWeekend']).size().unstack(fill_value=0)
+for binary in counts.index:
+    freqs = counts.loc[binary]
+    plt.figure()
+    plt.bar(freqs.index, freqs.values)
+    plt.title(f'Kickstarter State Counts in {binary}')
+    plt.xlabel('DeadlineWeekend')
+    plt.ylabel('Count')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+# Again, no pattern, useless feature to drop.
+
+
+# In[ ]:
+
+
 '''
     From our understanding of the data, we can clear cut which inputs to use for our models.
     
@@ -665,10 +896,18 @@ selected_inputs = ['goal', 'country', 'staff_pick', 'backers_count', 'usd_pledge
 
 output = ['SuccessfulBool']
 
-selected_columns = ['goal', 'country', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
+selected_columns = ['goal', 'state', 'country', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'SuccessfulBool']
 
+
+# In[ ]:
+
+
 kickstarter = kickstarter[selected_columns]
+
+
+# In[ ]:
+
 
 to_encode = ['category', 'country']
 
@@ -676,4 +915,30 @@ encoder = LabelEncoder()
 for col in to_encode:
     kickstarter[col] = encoder.fit_transform(kickstarter[col])
 
+
+# In[ ]:
+
+
 kickstarter.head
+
+
+# In[ ]:
+
+
+kickstarter = kickstarter[kickstarter['state'] != 'live']
+
+# Seeing all of the count for each kickstarter state
+plt.figure(figsize=(10, 6))
+kickstarter['state'].value_counts().plot(kind='bar')
+plt.title('Kickstarter State Count')
+plt.ylabel('Count')
+plt.ylim(0, 12000)
+plt.xticks(rotation=45)
+plt.show()
+
+
+# In[ ]:
+
+
+print(len(kickstarter))
+
