@@ -5,6 +5,8 @@
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.utils import resample
 from sklearn.preprocessing import LabelEncoder
 
 filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
@@ -39,6 +41,21 @@ kickstarter = kickstarter.drop('state', axis=1)
 
 # One group mentioned that some of these columns are sorted, so we should randomize the dataframe
 kickstarter = kickstarter.sample(frac=1, random_state=42).reset_index(drop=True)
+# rows = []
+# fail_count = 0
+# target = 5220
+
+# for _, row in kickstarter.iterrows():
+#     if row['SuccessfulBool'] == 1:
+#         rows.append(row)
+#     elif(fail_count <= target):
+#         rows.append(row)
+#         fail_count += 1
+        
+# kickstarter = pd.DataFrame(rows, columns=kickstarter.columns).reset_index(drop=True)
+
+# # Shuffle one more time
+# kickstarter = kickstarter.sample(frac=1, random_state=42).reset_index(drop=True)s
 
 X = kickstarter.drop(['SuccessfulBool'], axis=1)
 Y = kickstarter['SuccessfulBool']
