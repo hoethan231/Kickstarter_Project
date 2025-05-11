@@ -8,18 +8,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import precision_recall_curve, roc_curve, accuracy_score, roc_auc_score, auc, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.inspection import permutation_importance
+from sklearn.preprocessing import Normalizer
 
 from df import X, Y
 
-# Since the feature "spotlight" is a one to one with "SuccessfulBool" we will drop it to see if the other 
-# features are strong enough to predict.
-X = X.drop('spotlight', axis=1)
-X = X.drop('usd_pledged', axis=1)
-X = X.drop('backers_count', axis=1)
+norm_scaler = Normalizer()
 
 # X['goal'] = np.log(X['goal'])
 # X['goal'] = np.sqrt(X['goal'])
-
+# X['goal'] = norm_scaler.fit_transform(X[['goal']])
 
 # We have a dataset that consist of ~18000 samples, 10% of the dataset for the test set should
 # be good enough.
@@ -32,7 +29,7 @@ best_ada = None
 # rate = 0.05
 
 # while rate < 1:
-#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), n_estimators=500, learning_rate=rate, random_state=42)
+#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), n_estimators=700, learning_rate=rate, random_state=42)
 #     ada.fit(x_train, y_train)
 #     y_pred = ada.predict(x_test)
 #     print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Learning rate {rate:.2f}: ", accuracy_score(y_test, y_pred))
@@ -44,7 +41,19 @@ best_ada = None
 # rate = 0.05
 
 # while rate < 1:
-#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=500, learning_rate=rate, random_state=42)
+#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=700, learning_rate=rate, random_state=42)
+#     ada.fit(x_train, y_train)
+#     y_pred = ada.predict(x_test)
+#     print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Learning rate {rate:.2f}: ", accuracy_score(y_test, y_pred))
+#     rate+= 0.05
+    
+#     name = "AdaBoost N_EST=500, DEPTH=2, LR=" + str(rate)
+#     models.append((name, ada))
+
+# rate = 0.05
+
+# while rate < 1:
+#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=700, learning_rate=rate, random_state=42)
 #     ada.fit(x_train, y_train)
 #     y_pred = ada.predict(x_test)
 #     print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Learning rate {rate:.2f}: ", accuracy_score(y_test, y_pred))
@@ -81,37 +90,39 @@ best_ada = None
     Out of curiosity, I want to see the number of depths will improve the model or not.
 '''
 
-rate = 0.30
-estimators = 50
-
-print("\nAdaboosting with Depth of 2")
-
-while estimators < 600:
-    ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=estimators, learning_rate=rate, random_state=42)
-    ada.fit(x_train, y_train)
-    y_pred = ada.predict(x_test)
-    print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Estimator {estimators}: ", accuracy_score(y_test, y_pred))
-    estimators += 50
-    
-    name = "AdaBoost DEPTH=2, LR=0.3, N_EST=" + str(estimators)
-    models.append((name, ada))
-    if (estimators == 550):
-        best_ada = ada
-        
-    
-# estimators = 50
 # rate = 0.30
-# print("\nAdaboosting with Depth of 3")
-    
+# estimators = 50
+
+# print("\nAdaboosting with Depth of 2")
+
 # while estimators < 600:
-#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=estimators, learning_rate=rate, random_state=42)
+#     ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2), n_estimators=estimators, learning_rate=rate, random_state=42)
 #     ada.fit(x_train, y_train)
 #     y_pred = ada.predict(x_test)
 #     print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Estimator {estimators}: ", accuracy_score(y_test, y_pred))
 #     estimators += 50
     
-#     name = "AdaBoost DEPTH=3, LR=0.3, N_EST=" + str(estimators)
+#     name = "AdaBoost DEPTH=2, LR=0.3, N_EST=" + str(estimators)
 #     models.append((name, ada))
+#     if (estimators == 550):
+#         best_ada = ada
+        
+    
+estimators = 50
+rate = 0.95
+print("\nAdaboosting with Depth of 3")
+    
+while estimators < 600:
+    ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=estimators, learning_rate=rate, random_state=42)
+    ada.fit(x_train, y_train)
+    y_pred = ada.predict(x_test)
+    print(f"Accuracy Score of Decision Tree w/ Adaboost w/ Estimator {estimators}: ", accuracy_score(y_test, y_pred))
+    estimators += 50
+    
+    name = "AdaBoost DEPTH=3, LR=0.3, N_EST=" + str(estimators)
+    models.append((name, ada))
+    if (estimators == 400):
+        best_ada = ada
     
     
 # Applying Cross Validation to each model
@@ -210,3 +221,5 @@ plt.show()
         
     This is for the # of Estimators with 550.
 '''
+
+# Best: 0.763211 using {'estimator__max_depth': 3, 'learning_rate': 1, 'n_estimators': 600}
