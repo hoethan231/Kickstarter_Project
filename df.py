@@ -11,9 +11,11 @@ filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.cs
 kickstarter = pd.read_csv(filepath)
 
 # selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
-#                     'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'name_len_clean' 'SuccessfulBool']
+#                     'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'launch_to_state_change_days', 'name_len_clean', 
+#                     'blurb_len_clean', 'deadline_weekday', 'created_at_weekday', 'launched_at_weekday', 'USorGB', 
+#                     'TOPCOUNTRY', 'LaunchedTuesday', 'DeadlineWeekend', 'SuccessfulBool']
 selected_columns = ['goal', 'state', 'country', 'static_usd_rate', 'staff_pick', 'backers_count', 'usd_pledged', 'category', 'spotlight', 
-                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'SuccessfulBool']
+                    'created_at_yr', 'create_to_launch_days', 'launch_to_deadline_days', 'blurb_len_clean', 'SuccessfulBool']
 
 kickstarter = kickstarter[selected_columns]
 
@@ -26,6 +28,7 @@ kickstarter = kickstarter.drop('static_usd_rate', axis=1)
 
 # Encoding category and country
 to_encode = ['category', 'country']
+# to_encode = ['category', 'country', 'deadline_weekday', 'created_at_weekday', 'launched_at_weekday']
 encoder = LabelEncoder()
 for col in to_encode:
     kickstarter[col] = encoder.fit_transform(kickstarter[col])
@@ -36,7 +39,7 @@ kickstarter = kickstarter[kickstarter['state'] != 'live']
 kickstarter = kickstarter.drop('state', axis=1)
 
 # One group mentioned that some of these columns are sorted, so we should randomize the dataframe
-kickstarter = kickstarter.sample(frac=1).reset_index(drop=True)
+kickstarter = kickstarter.sample(frac=1, random_state=42).reset_index(drop=True)
 
 X = kickstarter.drop(['SuccessfulBool'], axis=1)
 Y = kickstarter['SuccessfulBool']
