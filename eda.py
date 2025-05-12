@@ -23,7 +23,7 @@ from sklearn.preprocessing import LabelEncoder
 
 ''' https://www.kaggle.com/datasets/sripaadsrinivasan/kickstarter-campaigns-dataset '''
 
-filepath = "/Users/yyaatt/Desktop/CMPE188/Final-Project/kickstarter_data_full.csv"
+filepath = "/Users/prathamsaxena/Downloads/SJSU/CMPE 188/ML Code/ML Data/kickstarter_data_full.csv"
 kickstarter = pd.read_csv(filepath)
 
 
