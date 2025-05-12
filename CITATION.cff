@@ -1,0 +1,12 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Ho
+    given-names: Ethan
+  - family-names: Saxena
+    given-names: Pratham
+  - family-names: Thai
+    given-names: Yathien
+title: Kickstarter Campaign Prediction through Multiple Algorithms
+version: 1.0.0
+date-released: 2025-05-12
