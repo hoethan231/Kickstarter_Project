@@ -3,14 +3,21 @@ warnings.filterwarnings("ignore")
 
 import pandas as pd
 import numpy as np
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import seaborn as sns
 
+=======
+>>>>>>> d53aaa0 (random forest updated, trying stuff)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, classification_report
+from sklearn.metrics import accuracy_score, roc_auc_score, classification_report, precision_recall_curve
+from sklearn.utils.class_weight import compute_class_weight
+
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
+<<<<<<< HEAD
 from tensorflow.keras.layers import Dense, Dropout, Input, Flatten
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
@@ -48,10 +55,54 @@ model1_preds = (model1_preds_proba > 0.5).astype(int)
 
 acc = accuracy_score(y_test, model1_preds)
 auc = roc_auc_score(y_test, model1_preds_proba)
+=======
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, LeakyReLU
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.optimizers import Adam, RMSprop, SGD
 
-print(f"Neural Network Accuracy: {acc:.4f}")
-print(f"Neural Network AUC: {auc:.4f}")
+from df import X, Y
 
+X_train, X_test, y_train, y_test = train_test_split(X, Y, train_size=0.7, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+class_weights_array = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+class_weights = dict(enumerate(class_weights_array))
+
+optimizers = {
+    'Adam': Adam(learning_rate=0.0005),
+    'RMSprop': RMSprop(learning_rate=0.0005),
+    'SGD': SGD(learning_rate=0.01, momentum=0.9),
+}
+
+results = []
+
+for name, optimizer in optimizers.items():
+    model = Sequential([
+        Dense(256, input_shape=(X_train_scaled.shape[1],)),
+        BatchNormalization(),
+        LeakyReLU(negative_slope=0.01),
+        Dropout(0.2),
+        Dense(128),
+        BatchNormalization(),
+        LeakyReLU(negative_slope=0.01),
+        Dropout(0.1),
+        Dense(64),
+        BatchNormalization(),
+        LeakyReLU(negative_slope=0.01),
+        Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', tf.keras.metrics.AUC(name='auc')])
+>>>>>>> d53aaa0 (random forest updated, trying stuff)
+
+    callbacks = [
+        EarlyStopping(patience=10, restore_best_weights=True, verbose=0),
+        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4, min_lr=1e-5, verbose=0)
+    ]
+
+<<<<<<< HEAD
 print(" Classification Report:")
 print(classification_report(y_test, model1_preds))
 
@@ -185,3 +236,37 @@ plt.xlabel('Neurons per Layer')
 plt.ylabel('Max Mean CV Accuracy')
 plt.grid(True)
 plt.show()
+=======
+    history = model.fit(
+        X_train_scaled, y_train,
+        validation_split=0.2,
+        batch_size=64,
+        epochs=100,
+        class_weight=class_weights,
+        callbacks=callbacks,
+        verbose=0
+    )
+
+    preds_proba = model.predict(X_test_scaled).flatten()
+    precisions, recalls, thresholds = precision_recall_curve(y_test, preds_proba)
+    f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-8)
+    best_threshold = thresholds[np.argmax(f1_scores)]
+    preds = (preds_proba > best_threshold).astype(int)
+
+    acc = accuracy_score(y_test, preds)
+    auc = roc_auc_score(y_test, preds_proba)
+    report = classification_report(y_test, preds, output_dict=True)
+
+    results.append({
+        'Optimizer': name,
+        'Accuracy': round(acc, 4),
+        'AUC': round(auc, 4),
+        'F1': round(report['1']['f1-score'], 4),
+        'Precision': round(report['1']['precision'], 4),
+        'Recall': round(report['1']['recall'], 4),
+        'Threshold': round(best_threshold, 4)
+    })
+
+df_results = pd.DataFrame(results)
+print(df_results)
+>>>>>>> d53aaa0 (random forest updated, trying stuff)
