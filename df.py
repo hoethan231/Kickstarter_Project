@@ -47,10 +47,10 @@ rawData = pd.read_csv(filepath)
 toDrop = ["Unnamed: 0", "id", "photo", "name", "blurb", "pledged", "state", "slug", "disable_communication", 
           "currency_symbol", "currency_trailing_code", "deadline", "state_changed_at", "created_at", "launched_at", 
           "staff_pick", "backers_count", "usd_pledged", "creator", "location", "profile", "spotlight", "urls", 
-          "source_url", "friends", "is_starred", "is_backing", "permissions", "create_to_launch", "launch_to_dealine", 
+          "source_url", "friends", "is_starred", "is_backing", "permissions", "create_to_launch", "launch_to_deadline", 
           "launch_to_state_change"]
 
-toEncode = ["country", "currency", "category", "deadline_weekday", "state_chnaged_at_weekday", "created_at_weekday",
+toEncode = ["country", "currency", "category", "deadline_weekday", "state_changed_at_weekday", "created_at_weekday",
             "launched_at_weekday"]
 
 rawDF = rawData.drop(columns=toDrop, axis=1)
