@@ -24,9 +24,7 @@ x_train, x_test, y_train, y_test = train_test_split(X, Y, random_state=42, test_
 model1 = Sequential([
     Input(shape=(x_train.shape[1],)),
     Dense(64, activation='sigmoid'),
-    # Dropout(0.5),
     Dense(32, activation='sigmoid'),
-    # Dropout(0.3),
     Dense(1, activation='sigmoid')
 ])
 model1.summary()
@@ -184,4 +182,59 @@ plt.title('Best Accuracy by Neuron Count')
 plt.xlabel('Neurons per Layer')
 plt.ylabel('Max Mean CV Accuracy')
 plt.grid(True)
+plt.show()
+best = grid_result.best_params_
+
+def build_deep_model(n_layers=4, dropout_rate=0.2,
+                     activation=best['activation'],
+                     optimizer=best['optimizer'],
+                     learning_rate=best['learning_rate'],
+                     neurons=best['neurons']):
+    
+    if optimizer == 'adam':
+        opt = Adam(learning_rate=learning_rate)
+    elif optimizer == 'sgd':
+        opt = SGD(learning_rate=learning_rate)
+    else:
+        raise ValueError("Unsupported optimizer")
+    
+    model = Sequential()
+    model.add(Dense(neurons, input_dim=x_train.shape[1], activation=activation))
+    
+    for _ in range(n_layers - 1):
+        model.add(Dense(neurons, activation=activation))
+        model.add(Dropout(dropout_rate))
+    
+    model.add(Dense(1, activation='softmax'))
+    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
+    return model
+
+model2 = KerasClassifier(
+    model=build_deep_model,
+    batch_size=best['batch_size'],
+    epochs=best['epochs'],
+    callbacks=[early_stop]
+)
+
+param_grid2 = {
+    "model__n_layers": [4, 5, 6, 7],
+    "model__dropout_rate": [0.0, 0.2, 0.4, 0.5]
+}
+
+grid2 = GridSearchCV(estimator=model2, param_grid=param_grid2, cv=3)
+grid2_result = grid2.fit(x_train, y_train)
+
+print("Best params for deep model:", grid2_result.best_params_)
+
+results2 = pd.DataFrame(grid2_result.cv_results_)
+
+pivot = results2.pivot_table(values='mean_test_score',
+                             index='param_model__n_layers',
+                             columns='param_model__dropout_rate')
+
+plt.figure()
+sns.heatmap(pivot, annot=True, fmt=".4f", cmap="magma")
+plt.title("Accuracy Heatmap: Dropout Rate vs Number of Layers")
+plt.xlabel("Dropout Rate")
+plt.ylabel("Number of Layers")
 plt.show()
