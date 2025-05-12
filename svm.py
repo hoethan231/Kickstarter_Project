@@ -23,7 +23,7 @@ pipeline = Pipeline([
 param_grid = {
     "svc__kernel": ['linear', 'rbf', 'poly', 'sigmoid'],
     "svc__C": [0.001, 0.01, 0.1, 1, 10, 100, 500],
-    "svc__gamma": np.logspace(-1, 1, 13),
+    "svc__gamma": np.logspace(-1, 1, 5),
     "svc__max_iter" : [1000, 100000, 1000000]
 }
 
@@ -39,18 +39,16 @@ grid = GridSearchCV(
 )
 grid.fit(x_train, y_train)
 
-grid.cv_results_
-grid.best_params_
+print(grid.best_params_)
+
 res = pd.DataFrame(grid.cv_results_)
 res.head()
-res = res[['param_svc__kernel', 'param_svc__C', 'param_svc__gamma', 'mean_test_score']]
+res = res[['param_svc__kernel', 'param_svc__C', 'param_svc__gamma', 'mean_test_score', 'param_svc__max_iter']]
 
-# Plot for each kernel
 kernels = res['param_svc__kernel'].unique()
 for kernel in kernels:
     subset = res[res['param_svc__kernel'] == kernel]
     
-    # Use pivot_table with mean to handle duplicates due to multiple max_iter values
     pivot = subset.pivot_table(
         index='param_svc__C',
         columns='param_svc__gamma',
@@ -65,45 +63,103 @@ for kernel in kernels:
     plt.ylabel('C')
     plt.tight_layout()
     plt.show()
-top_10 = res.sort_values(by='mean_test_score', ascending=False).head(10)
-
-# Print selected columns for readability
-print(top_10[['mean_test_score', 'mean_train_score', 'param_svc__kernel', 
-              'param_svc__C', 'param_svc__gamma', 'param_svc__max_iter']])
-
+    
+top_model_params = res.sort_values(by='mean_test_score', ascending=False)
+print(top_model_params)
 grid.best_params_
+best_rbf = res[
+    (res['param_svc__kernel'] == 'rbf') &
+    (res['param_svc__C'] == 1.0) &
+    (res['param_svc__gamma'] == 3.1622776601683795)
+]
 
+best_rbf = best_rbf.sort_values(by='param_svc__max_iter')
 
-# # Get best model and score
-# print("Best C:", grid.best_params_['svc__C'])
-# print("Best cross-validation accuracy:", grid.best_score_)
+plt.figure(figsize=(8, 5))
+plt.plot(best_rbf['param_svc__max_iter'], best_rbf['mean_test_score'], marker='o')
+plt.title("Accuracy vs. max_iter for Best RBF Parameters")
+plt.xlabel("max_iter")
+plt.ylabel("Mean CV Accuracy")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
-# # Final evaluation on test set
-# final_accuracy = grid.score(x_test, y_test)
-# print("Test set accuracy:", final_accuracy)
-# # Testing the loss function on raw data so it can regularize and eliminate features on its own
-# x_train2, x_test2, y_train2, y_test2 = train_test_split(x, y, random_state=42, test_size=0.3, stratify=y)
+# Testing the loss function on raw data so it can regularize and eliminate features on its own
+x_train2, x_test2, y_train2, y_test2 = train_test_split(x, y, random_state=42, test_size=0.3, stratify=y)
 
-# loss_models = []
-# loss_models.append(
-#     ('Lasso Linear SVC', 
-#     LinearSVC(C=100, penalty="l1", loss='squared_hinge', dual=False, random_state=42, max_iter=1000000))
-# )
-# loss_models.append(
-#     ('Ridge Linear SVC', 
-#     LinearSVC(C=100, penalty="l2", loss="squared_hinge", dual=True, random_state=42, max_iter=1000000)) # by default is l2 already
-# )
-# loss_results = []
-# loss_names = []
+loss_pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("clf", LinearSVC(loss='squared_hinge', random_state=42, max_iter=1000000))
+])
 
-# for name, model in loss_models:
-#     kfold = KFold(n_splits=3, random_state=42, shuffle=True)
-#     cv_result = cross_val_score(model, x_train2, y_train2, cv=kfold, scoring="accuracy")
-#     loss_results.append(cv_result)
-#     loss_names.append(name)
-# fig = plt.figure()
-# fig.suptitle('Algorithm Comparison')
-# ax = fig.add_subplot(111)
-# plt.boxplot(loss_results)
-# ax.set_xticklabels(loss_names)
-# plt.show()
+param_grid_l1 = {
+    'clf__penalty': ['l1'],
+    'clf__dual': [False],
+    'clf__C': [0.01, 0.1, 1, 10]
+}
+
+param_grid_l2 = {
+    'clf__penalty': ['l2'],
+    'clf__dual': [True, False],
+    'clf__C': [0.01, 0.1, 1, 10]
+}
+
+grid_l1 = GridSearchCV(loss_pipeline, param_grid=param_grid_l1, scoring='accuracy', cv=3, n_jobs=-1)
+grid_l2 = GridSearchCV(loss_pipeline, param_grid=param_grid_l2, scoring='accuracy', cv=3, n_jobs=-1)
+grid_l1.fit(x_train2, y_train2)
+grid_l2.fit(x_train2, y_train2)
+
+coef_l1 = grid_l1.best_estimator_.named_steps['clf'].coef_.ravel()
+coef_l2 = grid_l2.best_estimator_.named_steps['clf'].coef_.ravel()
+
+plt.figure(figsize=(10, 5))
+plt.plot(coef_l1, label="L1 penalty", marker='o')
+plt.plot(coef_l2, label="L2 penalty", marker='x')
+plt.axhline(0, color='gray', linestyle='--')
+plt.title("Feature Coefficients: L1 vs L2 Regularization")
+plt.xlabel("Feature Index")
+plt.ylabel("Coefficient Value")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+df_l1 = pd.DataFrame(grid_l1.cv_results_)
+df_l2 = pd.DataFrame(grid_l2.cv_results_)
+
+df_l1["Penalty"] = "L1"
+df_l2["Penalty"] = "L2"
+
+df_all = pd.concat([df_l1, df_l2], ignore_index=True)
+
+df_plot = df_all[["param_clf__C", "mean_test_score", "Penalty"]]
+
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=df_plot, x="param_clf__C", y="mean_test_score", hue="Penalty")
+plt.title("LinearSVC Accuracy by C Value and Penalty Type")
+plt.xlabel("C Value")
+plt.ylabel("Mean Cross-Validated Accuracy")
+plt.legend(title="Penalty")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+df_l1_coef = pd.DataFrame({
+    "Feature": x.columns.tolist(),
+    "Coefficient": coef_l1
+})
+
+df_l1_coef["AbsCoeff"] = df_l1_coef["Coefficient"].abs()
+df_l1_top = df_l1_coef.sort_values(by="AbsCoeff", ascending=False)
+
+print("Top 10 L1 features by importance:")
+print(df_l1_top.head(10))
+df_l2_coef = pd.DataFrame({
+    "Feature": x.columns.tolist(),
+    "Coefficient": coef_l2
+})
+
+df_l2_coef["AbsCoeff"] = df_l2_coef["Coefficient"].abs()
+df_l2_top = df_l2_coef.sort_values(by="AbsCoeff", ascending=False)
+
+print("\nTop 10 L2 features by importance:")
+print(df_l2_top.head(10))
