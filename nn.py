@@ -122,6 +122,7 @@ optimizers = {
     'SGD': SGD(learning_rate=0.01, momentum=0.9),
 }
 earlystop = EarlyStopping(patience=10, restore_best_weights=True, verbose=0)
+earlystop = EarlyStopping(patience=10, restore_best_weights=True, verbose=0)
 
 results = []
 
@@ -144,6 +145,7 @@ for name, optimizer in optimizers.items():
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', tf.keras.metrics.AUC(name='auc')])
 
     callbacks = [
+        earlystop,
         earlystop,
         ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4, min_lr=1e-5, verbose=0)
     ]
