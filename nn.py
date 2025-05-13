@@ -3,62 +3,20 @@ warnings.filterwarnings("ignore")
 
 import pandas as pd
 import numpy as np
-<<<<<<< HEAD
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import seaborn as sns
 
-=======
->>>>>>> d53aaa0 (random forest updated, trying stuff)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report, precision_recall_curve
 from sklearn.utils.class_weight import compute_class_weight
-
-import tensorflow as tf
 from tensorflow.keras.models import Sequential
-<<<<<<< HEAD
-from tensorflow.keras.layers import Dense, Dropout, Input, Flatten
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.optimizers import Adam, SGD, RMSprop
-from sklearn.model_selection import GridSearchCV
-from scikeras.wrappers import KerasClassifier
-
-from df import X, Y
-
-x_train, x_test, y_train, y_test = train_test_split(X, Y, random_state=42, test_size=0.3, stratify=Y)
-
-model1 = Sequential([
-    Input(shape=(x_train.shape[1],)),
-    Dense(64, activation='sigmoid'),
-    # Dropout(0.5),
-    Dense(32, activation='sigmoid'),
-    # Dropout(0.3),
-    Dense(1, activation='sigmoid')
-])
-model1.summary()
-
-model1.compile(optimizer=SGD(),
-              loss='binary_crossentropy',
-              metrics=['accuracy', tf.keras.metrics.AUC(name='auc')])
-
-history = model1.fit(
-    x_train, y_train,
-    validation_split=0.2,
-    batch_size=128,
-    epochs=15,
-    callbacks=[EarlyStopping(patience=5, restore_best_weights=True)],
-    verbose=1
-)
-model1_preds_proba = model1.predict(x_test).flatten()
-model1_preds = (model1_preds_proba > 0.5).astype(int)
-
-acc = accuracy_score(y_test, model1_preds)
-auc = roc_auc_score(y_test, model1_preds_proba)
-=======
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, LeakyReLU
+from tensorflow.keras.layers import Dense, Input, Flatten, Dropout, BatchNormalization, LeakyReLU
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam, RMSprop, SGD
+from sklearn.model_selection import GridSearchCV
+from scikeras.wrappers import KerasClassifier
 
 from df import X, Y
 
@@ -75,6 +33,7 @@ optimizers = {
     'RMSprop': RMSprop(learning_rate=0.0005),
     'SGD': SGD(learning_rate=0.01, momentum=0.9),
 }
+earlystop = EarlyStopping(patience=10, restore_best_weights=True, verbose=0)
 
 results = []
 
@@ -95,65 +54,44 @@ for name, optimizer in optimizers.items():
     ])
 
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', tf.keras.metrics.AUC(name='auc')])
->>>>>>> d53aaa0 (random forest updated, trying stuff)
 
     callbacks = [
-        EarlyStopping(patience=10, restore_best_weights=True, verbose=0),
+        earlystop,
         ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4, min_lr=1e-5, verbose=0)
     ]
 
-<<<<<<< HEAD
-print(" Classification Report:")
-print(classification_report(y_test, model1_preds))
+    history = model.fit(
+        X_train_scaled, y_train,
+        validation_split=0.2,
+        batch_size=64,
+        epochs=100,
+        class_weight=class_weights,
+        callbacks=callbacks,
+        verbose=0
+    )
 
-fpr, tpr, _ = roc_curve(y_test, model1_preds_proba)
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, label=f"NN Model 1 (AUC = {auc:.4f})")
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("ROC Curve - Neural Network")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+    preds_proba = model.predict(X_test_scaled).flatten()
+    precisions, recalls, thresholds = precision_recall_curve(y_test, preds_proba)
+    f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-8)
+    best_threshold = thresholds[np.argmax(f1_scores)]
+    preds = (preds_proba > best_threshold).astype(int)
 
-model2 = Sequential()
-model2.add(Flatten(input_shape=(x_train.shape[1],)))
-model2.add(Dense(50, activation='relu'))
-model2.add(Dense(36, activation='relu'))
-model2.add(Dense(1, activation='relu'))
-model2.summary()
+    acc = accuracy_score(y_test, preds)
+    auc = roc_auc_score(y_test, preds_proba)
+    report = classification_report(y_test, preds, output_dict=True)
 
-model2.compile(optimizer=Adam(),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+    results.append({
+        'Optimizer': name,
+        'Accuracy': round(acc, 4),
+        'AUC': round(auc, 4),
+        'F1': round(report['1']['f1-score'], 4),
+        'Precision': round(report['1']['precision'], 4),
+        'Recall': round(report['1']['recall'], 4),
+        'Threshold': round(best_threshold, 4)
+    })
 
-history2 = model2.fit(x_train, y_train, epochs=8, batch_size=64, validation_split=0.2)
-model2_preds_proba = model2.predict(x_test).flatten()
-model2_preds = (model2_preds_proba > 0.5).astype(int)
-
-acc = accuracy_score(y_test, model2_preds)
-auc = roc_auc_score(y_test, model2_preds_proba)
-
-print(f"Neural Network Accuracy: {acc:.4f}")
-print(f"Neural Network AUC: {auc:.4f}")
-
-print(" Classification Report:")
-print(classification_report(y_test, model2_preds))
-
-fpr, tpr, _ = roc_curve(y_test, model2_preds_proba)
-
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, label=f"NN Model 2 (AUC = {auc:.4f})")
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("ROC Curve - Neural Network")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+df_results = pd.DataFrame(results)
+print(df_results)
 
 def build_model(n_layers=1, activation='relu', optimizer='adam', learning_rate=0.001, neurons=64):
     if optimizer == 'adam':
@@ -166,13 +104,16 @@ def build_model(n_layers=1, activation='relu', optimizer='adam', learning_rate=0
         raise ValueError("Unsupported optimizer")
 
     model = Sequential()
-    model.add(Dense(neurons, input_dim=x_train.shape[1], activation=activation))
+    model.add(Dense(neurons, input_dim=X_train.shape[1], activation=activation))
     for _ in range(n_layers - 1):
         model.add(Dense(neurons, activation=activation))
     model.add(Dense(1, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     return model
-model = KerasClassifier(model=build_model)
+model = KerasClassifier(
+    model=build_model,
+    callbacks=[earlystop]
+    )
 
 param_grid = {
     "model__n_layers": [1, 2],
@@ -185,7 +126,7 @@ param_grid = {
 }
 
 grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=3)
-grid_result = grid.fit(x_train, y_train)
+grid_result = grid.fit(X_train, y_train)
 
 print(f"Best: {grid_result.best_score_:.4f} using {grid_result.best_params_}")
 
@@ -236,37 +177,59 @@ plt.xlabel('Neurons per Layer')
 plt.ylabel('Max Mean CV Accuracy')
 plt.grid(True)
 plt.show()
-=======
-    history = model.fit(
-        X_train_scaled, y_train,
-        validation_split=0.2,
-        batch_size=64,
-        epochs=100,
-        class_weight=class_weights,
-        callbacks=callbacks,
-        verbose=0
-    )
 
-    preds_proba = model.predict(X_test_scaled).flatten()
-    precisions, recalls, thresholds = precision_recall_curve(y_test, preds_proba)
-    f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-8)
-    best_threshold = thresholds[np.argmax(f1_scores)]
-    preds = (preds_proba > best_threshold).astype(int)
+best = grid_result.best_params_
 
-    acc = accuracy_score(y_test, preds)
-    auc = roc_auc_score(y_test, preds_proba)
-    report = classification_report(y_test, preds, output_dict=True)
+def build_deep_model(n_layers=4, dropout_rate=0.2,
+                     activation=best['activation'],
+                     optimizer=best['optimizer'],
+                     learning_rate=best['learning_rate'],
+                     neurons=best['neurons']):
+    
+    if optimizer == 'adam':
+        opt = Adam(learning_rate=learning_rate)
+    elif optimizer == 'sgd':
+        opt = SGD(learning_rate=learning_rate)
+    else:
+        raise ValueError("Unsupported optimizer")
+    
+    model = Sequential()
+    model.add(Dense(neurons, input_dim=X_train.shape[1], activation=activation))
+    
+    for _ in range(n_layers - 1):
+        model.add(Dense(neurons, activation=activation))
+        model.add(Dropout(dropout_rate))
+    
+    model.add(Dense(1, activation='softmax'))
+    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
+    return model
 
-    results.append({
-        'Optimizer': name,
-        'Accuracy': round(acc, 4),
-        'AUC': round(auc, 4),
-        'F1': round(report['1']['f1-score'], 4),
-        'Precision': round(report['1']['precision'], 4),
-        'Recall': round(report['1']['recall'], 4),
-        'Threshold': round(best_threshold, 4)
-    })
+model2 = KerasClassifier(
+    model=build_deep_model,
+    batch_size=best['batch_size'],
+    epochs=best['epochs'],
+    callbacks=[earlystop]
+)
 
-df_results = pd.DataFrame(results)
-print(df_results)
->>>>>>> d53aaa0 (random forest updated, trying stuff)
+param_grid2 = {
+    "model__n_layers": [4, 5, 6, 7],
+    "model__dropout_rate": [0.0, 0.2, 0.4, 0.5]
+}
+
+grid2 = GridSearchCV(estimator=model2, param_grid=param_grid2, cv=3)
+grid2_result = grid2.fit(X_train, y_train)
+
+print("Best params for deep model:", grid2_result.best_params_)
+
+results2 = pd.DataFrame(grid2_result.cv_results_)
+
+pivot = results2.pivot_table(values='mean_test_score',
+                             index='param_model__n_layers',
+                             columns='param_model__dropout_rate')
+
+plt.figure()
+sns.heatmap(pivot, annot=True, fmt=".4f", cmap="magma")
+plt.title("Accuracy Heatmap: Dropout Rate vs Number of Layers")
+plt.xlabel("Dropout Rate")
+plt.ylabel("Number of Layers")
+plt.show()
