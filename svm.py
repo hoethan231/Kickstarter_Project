@@ -37,12 +37,14 @@ grid = GridSearchCV(
     n_jobs=-1,
     return_train_score=True
 )
+
 grid.fit(x_train, y_train)
 
 print(grid.best_params_)
 
 res = pd.DataFrame(grid.cv_results_)
 res.head()
+
 res = res[['param_svc__kernel', 'param_svc__C', 'param_svc__gamma', 'mean_test_score', 'param_svc__max_iter']]
 
 kernels = res['param_svc__kernel'].unique()
@@ -63,10 +65,12 @@ for kernel in kernels:
     plt.ylabel('C')
     plt.tight_layout()
     plt.show()
-    
+
 top_model_params = res.sort_values(by='mean_test_score', ascending=False)
 print(top_model_params)
+
 grid.best_params_
+
 best_rbf = res[
     (res['param_svc__kernel'] == 'rbf') &
     (res['param_svc__C'] == 1.0) &
@@ -104,8 +108,10 @@ param_grid_l2 = {
     'clf__C': [0.01, 0.1, 1, 10]
 }
 
+
 grid_l1 = GridSearchCV(loss_pipeline, param_grid=param_grid_l1, scoring='accuracy', cv=3, n_jobs=-1)
 grid_l2 = GridSearchCV(loss_pipeline, param_grid=param_grid_l2, scoring='accuracy', cv=3, n_jobs=-1)
+
 grid_l1.fit(x_train2, y_train2)
 grid_l2.fit(x_train2, y_train2)
 
@@ -123,6 +129,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
+
 df_l1 = pd.DataFrame(grid_l1.cv_results_)
 df_l2 = pd.DataFrame(grid_l2.cv_results_)
 
@@ -133,6 +140,7 @@ df_all = pd.concat([df_l1, df_l2], ignore_index=True)
 
 df_plot = df_all[["param_clf__C", "mean_test_score", "Penalty"]]
 
+# Create boxplot grouped by C and penalty
 plt.figure(figsize=(10, 6))
 sns.boxplot(data=df_plot, x="param_clf__C", y="mean_test_score", hue="Penalty")
 plt.title("LinearSVC Accuracy by C Value and Penalty Type")
@@ -142,6 +150,7 @@ plt.legend(title="Penalty")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
 
 df_l1_coef = pd.DataFrame({
     "Feature": x.columns.tolist(),
@@ -153,6 +162,7 @@ df_l1_top = df_l1_coef.sort_values(by="AbsCoeff", ascending=False)
 
 print("Top 10 L1 features by importance:")
 print(df_l1_top.head(10))
+
 df_l2_coef = pd.DataFrame({
     "Feature": x.columns.tolist(),
     "Coefficient": coef_l2
@@ -163,3 +173,75 @@ df_l2_top = df_l2_coef.sort_values(by="AbsCoeff", ascending=False)
 
 print("\nTop 10 L2 features by importance:")
 print(df_l2_top.head(10))
+
+df_l1.columns
+
+# Now will fine tune our best models so far which is the linear kernal and radical
+
+pipeline_linear = Pipeline([
+    ("scaler", StandardScaler()),
+    ("clf", LinearSVC(penalty='l1', loss='squared_hinge', dual=False, max_iter=1000000, random_state=42))
+])
+
+param_grid_linear = {
+    'clf__C': [5, 7.5, 10, 12.5, 15, 20]
+}
+
+pipeline_rbf = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel='rbf', max_iter=1000000, random_state=42))
+])
+
+param_grid_rbf = {
+    'svc__C': [0.5, 0.75, 1.0, 1.25, 1.5],
+    'svc__gamma': [2.5, 3.0, 3.50, 4.0],
+    'svc__max_iter': [1000, 10000, 100000]
+}
+
+
+cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+grid_linear = GridSearchCV(pipeline_linear, param_grid_linear, cv=cv, scoring='accuracy', n_jobs=-1, return_train_score=True)
+grid_rbf = GridSearchCV(pipeline_rbf, param_grid_rbf, cv=cv, scoring='accuracy', n_jobs=-1, return_train_score=True)
+
+grid_linear.fit(x_train2, y_train2)
+grid_rbf.fit(x_train2, y_train2)
+
+print("Best LinearSVC (L1) Params:", grid_linear.best_params_, "| Accuracy:", grid_linear.best_score_)
+print("Best RBF SVC Params:", grid_rbf.best_params_, "| Accuracy:", grid_rbf.best_score_)
+
+
+df_rbf = pd.DataFrame(grid_rbf.cv_results_)
+
+df_rbf_plot = df_rbf[['param_svc__C', 'param_svc__gamma', 'param_svc__mean_test_score']]
+df_rbf_plot = df_rbf_plot.rename(columns={'param_svc__mean_test_score': 'mean_test_score'})
+
+heatmap_data = df_rbf_plot.pivot(index='param_svc__C', columns='param_svc__gamma', values='mean_test_score')
+
+plt.figure(figsize=(10, 6))
+sns.heatmap(heatmap_data, annot=True, fmt=".3f", cmap="viridis")
+plt.title("RBF Kernel: Accuracy vs C and gamma")
+plt.xlabel("gamma")
+plt.ylabel("C")
+plt.tight_layout()
+plt.show()
+
+# Plotting convergence
+max_iters = sorted(df_rbf['param_svc__max_iter'].unique())
+
+for max_iter in max_iters:
+    subset = df_rbf[df_rbf['param_svc__max_iter'] == max_iter]
+
+    pivot = subset.pivot(
+        index='param_svc__C',
+        columns='param_svc__gamma',
+        values='mean_test_score'
+    )
+
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(pivot, annot=True, fmt=".3f", cmap='viridis')
+    plt.title(f"RBF Accuracy (max_iter = {max_iter})")
+    plt.xlabel("gamma")
+    plt.ylabel("C")
+    plt.tight_layout()
+    plt.show()
